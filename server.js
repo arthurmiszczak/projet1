@@ -29,3 +29,11 @@ connection.connect((err) => {
     console.log('Connexion à la base de données réussie !');
   }
 });
+
+
+
+const path = require('path');
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'web', 'index.html'));
+});
