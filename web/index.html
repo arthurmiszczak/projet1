@@ -1,16 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="theme-color" content="#f3f5f2">
+    <title>Connexion</title>
     <link rel="stylesheet" href="styles.css">
-    
 </head>
 <body>
+    <main class="login-page">
+        <section class="login-panel" aria-labelledby="login-title">
+            <a class="brand" href="/" aria-label="Accueil">
+               
+                
+            </a>
 
+            <div class="login-copy">
+                
+                
+                
+            </div>
 
+            <form class="login-form" action="/api/login" method="post">
+                <label for="user-id">Identifiant</label>
+                <input
+                    id="user-id"
+                    name="id"
+                    type="text"
+                    placeholder="Votre identifiant"
+                    autocomplete="username"
+                    required
+                    autofocus
+                >
 
-<script src="script.js"></script>    
+                <div class="password-label">
+                    <label for="password">Mot de passe</label>
+                </div>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Votre mot de passe"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit">
+                    <span>Se connecter</span>
+                    <span class="button-arrow" aria-hidden="true">&#8594;</span>
+                </button>
+            </form>
+
+            
+        </section>
+
+        <aside class="visual-panel" aria-hidden="true">
+            <div class="visual-caption">
+                <span class="caption-line"></span>
+                
+            </div>
+           
+        </aside>
+    </main>
 </body>
 </html>
