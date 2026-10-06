@@ -3,26 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion</title>
+    <title>Compte</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="main.js" defer></script>
 </head>
 <body>
-    <h1>Connexion</h1>
+    <section id="loginSection">
+        <h1>Connexion</h1>
+        <form id="loginForm">
+            <label for="loginInput">Identifiant</label>
+            <input id="loginInput" name="login" type="text" required>
 
-    <form action="/connexion" method="post">
-        <label for="loginInput">Identifiant</label>
-        <input id="loginInput" name="login" type="text" required>
+            <label for="passwordInput">Mot de passe</label>
+            <input id="passwordInput" name="password" type="password" required>
 
-        <label for="passwordInput">Mot de passe</label>
-        <input id="passwordInput" name="password" type="password" required>
+            <button type="submit">Se connecter</button>
+        </form>
+        <button id="showSignup" type="button">Créer un compte</button>
+    </section>
 
-        <button id="loginButton" type="submit">Se connecter</button>
-    </form>
+    <section id="signupSection" hidden>
+        <h1>Créer un compte</h1>
+        <form id="signupForm">
+            <label for="signupLogin">Identifiant</label>
+            <input id="signupLogin" name="inputValue" type="text" required>
 
-    <p>
-        <a href="/inscription">Créer un compte</a>
-        |
-        <a href="/mot-de-passe-oublie">Mot de passe oublié ?</a>
-    </p>
+            <label for="signupPassword">Mot de passe</label>
+            <input id="signupPassword" name="inputValue2" type="password" required>
+
+            <button type="submit">S'inscrire</button>
+        </form>
+        <button id="showLogin" type="button">Retour à la connexion</button>
+    </section>
+
+    <section id="dashboardSection" hidden>
+        <h1 id="welcomeMessage"></h1>
+        <button id="logoutButton" type="button">Déconnexion</button>
+
+        <section id="adminSection" hidden>
+            <h2>Gestion des comptes</h2>
+            <ul id="usersList"></ul>
+        </section>
+    </section>
 </body>
 </html>
