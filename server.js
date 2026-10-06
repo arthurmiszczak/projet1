@@ -37,3 +37,65 @@ const path = require('path');
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'web', 'index.html'));
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.post('/register', (req, res) => {
+    const { inputValue, inputValue2 } = req.body;
+    connection.query(
+        'INSERT INTO User (login, password) VALUES (?, ?)',
+        [inputValue, inputValue2],
+        (err, results) => {
+            if (err) {
+                console.error(err);
+                res.status(500).json({ message: 'Erreur serveur' });
+                return;
+            }
+            res.json({ message: 'Inscription réussie !', userId: results.insertId });
+        }
+    );
+});
+
+
+
+
+
+
+
+app.post('/connexion', (req, res) => {
+    const { login, password } = req.body;
+    connection.query('SELECT * FROM User WHERE login = ? AND password = ?', [login, password], (err, results) => {
+        if (err) {
+            res.status(500).json({ message: 'Erreur serveur' });
+            return;
+        }
+        if (results.length === 0) {
+            res.status(401).json({ message: 'Identifiants invalides' });
+            return;
+        }
+        res.json({ message: 'Connexion réussie !', User: results[0] });
+    });
+});
