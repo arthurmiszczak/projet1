@@ -9,14 +9,14 @@
 <body>
     <h1>Connexion</h1>
 
-    <form action="/api/login" method="post">
-        <label for="identifiant">Identifiant</label>
-        <input id="identifiant" name="id" type="text" required>
+    <form action="/connexion" method="post">
+        <label for="loginInput">Identifiant</label>
+        <input id="loginInput" name="login" type="text" required>
 
-        <label for="motdepasse">Mot de passe</label>
-        <input id="motdepasse" name="password" type="password" required>
+        <label for="passwordInput">Mot de passe</label>
+        <input id="passwordInput" name="password" type="password" required>
 
-        <button type="submit">Se connecter</button>
+        <button id="loginButton" type="submit">Se connecter</button>
     </form>
 
     <p>

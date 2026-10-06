@@ -1,10 +1,7 @@
-const monInput = document.getElementById('monInput');
-const monInput2 = document.getElementById('monInput2');
+const inputValue = document.getElementById('monInput');
+const inputvalue2 = document.getElementById('monInput2');
 const monBouton = document.getElementById('monBouton');
 const monBouton2 = document.getElementById('monBouton2');
-const monInputVote = document.getElementById('monInputVote'); 
-const monBoutonVoter = document.getElementById('monBoutonVote');
-const usersListSelect = document.getElementById('usersList'); 
 
 window.onload = () => {
     chargerUtilisateurs();
@@ -33,55 +30,19 @@ function chargerUtilisateurs() {
         });
 }
 
-function chargerVotes() {
-    fetch('/votes-count')
-        .then(response => response.json())
-        .then(votes => {
-            const listUl = document.getElementById('listUl');
-            votes.forEach(vote => {
-                const li = document.createElement('li');
-                li.innerHTML = `vote : ${vote.login} a voté pour ${vote.vote}`;
-                listUl.appendChild(li);
-            });
-        });
-}
 
--
-monBouton2.addEventListener('click', () => {
-    fetch('/info')
-        .then(response => response.json())
-        .then(json => {
-            document.getElementById('reponse').innerHTML = json.cle1;
-        });
-});
-
-
-monBouton.addEventListener('click', () => {
-    fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            inputValue: monInput.value,
-            inputValue2: monInput2.value
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        chargerUtilisateurs(); 
-    });
-});
-
-
+const loginInput = document.getElementById('loginInput');
+const passwordInput = document.getElementById('passwordInput');
 const loginButton = document.getElementById('loginButton');
-loginButton.addEventListener('click', () => {
-    const loginInput = document.getElementById('loginInput').value;
-    const passwordInput = document.getElementById('passwordInput').value;
 
+loginButton.addEventListener('click', () => {
     fetch('/connexion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: loginInput, password: passwordInput })
+        body: JSON.stringify({
+            login: loginInput.value,
+            password: passwordInput.value
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -92,30 +53,5 @@ loginButton.addEventListener('click', () => {
         } else {
             alert(data.message);
         }
-    });
-});
-
-monBoutonVoter.addEventListener('click', () => {
-    const recupUserId = localStorage.getItem('userId');
-    const candidatChoisi = monInputVote.value;
-
-    if (!recupUserId) {
-        alert("Vous devez vous connecter avant de voter ");
-        return;
-    }
-
-    fetch('/voter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId: recupUserId, 
-            voteValue: candidatChoisi
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
-        alert(data.message);
-        chargerVotes(); 
     });
 });
