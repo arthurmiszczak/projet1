@@ -1,40 +1,11 @@
-const inputValue = document.getElementById('monInput');
-const inputvalue2 = document.getElementById('monInput2');
-const monBouton = document.getElementById('monBouton');
-const monBouton2 = document.getElementById('monBouton2');
-
-window.onload = () => {
-    chargerUtilisateurs();
-    chargerVotes();
-};
-
-function chargerUtilisateurs() {
-    fetch('/users')
-        .then(response => response.json())
-        .then(users => {
-            const listUl = document.getElementById('listUl');
-            
-            usersListSelect.innerHTML = "";
-            listUl.innerHTML = "";
-
-            users.forEach(user => {
-
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.text = user.login;
-                usersListSelect.appendChild(option);
-                const li = document.createElement('li');
-                li.innerHTML = `Login: <p>${user.login}</p> (ID: ${user.id})`;
-                listUl.appendChild(li);
-            });
-        });
-}
-
-
 const loginSection = document.getElementById('loginSection');
 const signupSection = document.getElementById('signupSection');
 const dashboardSection = document.getElementById('dashboardSection');
 const adminSection = document.getElementById('adminSection');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const logoutButton = document.getElementById('logoutButton');
+const deleteAccountButton = document.getElementById('deleteAccountButton');
 
 async function api(url, options = {}) {
     const response = await fetch(url, {
@@ -51,27 +22,31 @@ async function api(url, options = {}) {
 }
 
 function afficherConnexion() {
-    dashboardSection.hidden = true;
-    signupSection.hidden = true;
-    loginSection.hidden = false;
+    if (dashboardSection) dashboardSection.hidden = true;
+    if (signupSection) signupSection.hidden = true;
+    if (loginSection) loginSection.hidden = false;
 }
 
 async function afficherTableauDeBord() {
     const user = await api('/api/me');
 
-    loginSection.hidden = true;
-    signupSection.hidden = true;
-    dashboardSection.hidden = false;
-    document.getElementById('welcomeMessage').textContent =
-        `Bien connecté en tant que ${user.login}`;
+    if (loginSection) loginSection.hidden = true;
+    if (signupSection) signupSection.hidden = true;
+    if (dashboardSection) dashboardSection.hidden = false;
 
-    adminSection.hidden = !user.admin;
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    if (welcomeMessage) {
+        welcomeMessage.textContent = `Bien connecté en tant que ${user.login}`;
+    }
+
+    if (adminSection) adminSection.hidden = !user.admin;
     if (user.admin) await chargerComptes();
 }
 
 async function chargerComptes() {
     const users = await api('/api/users');
     const list = document.getElementById('usersList');
+    if (!list) return;
     list.replaceChildren();
 
     for (const user of users) {
@@ -129,14 +104,14 @@ async function chargerComptes() {
     }
 }
 
-document.getElementById('showSignup').addEventListener('click', () => {
-    loginSection.hidden = true;
-    signupSection.hidden = false;
+document.getElementById('showSignup')?.addEventListener('click', () => {
+    if (loginSection) loginSection.hidden = true;
+    if (signupSection) signupSection.hidden = false;
 });
 
-document.getElementById('showLogin').addEventListener('click', afficherConnexion);
+document.getElementById('showLogin')?.addEventListener('click', afficherConnexion);
 
-document.getElementById('loginForm').addEventListener('submit', async (event) => {
+loginForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
         const form = Object.fromEntries(new FormData(event.currentTarget));
@@ -150,7 +125,7 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
     }
 });
 
-document.getElementById('signupForm').addEventListener('submit', async (event) => {
+signupForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
         const form = Object.fromEntries(new FormData(event.currentTarget));
@@ -159,19 +134,22 @@ document.getElementById('signupForm').addEventListener('submit', async (event) =
             body: JSON.stringify(form)
         });
         alert(data.message);
-        event.currentTarget.reset();
+        const formElement = event.currentTarget;
+        if (formElement && typeof formElement.reset === 'function') {
+            formElement.reset();
+        }
         afficherConnexion();
     } catch (error) {
         alert(error.message);
     }
 });
 
-document.getElementById('logoutButton').addEventListener('click', async () => {
+logoutButton?.addEventListener('click', async () => {
     await api('/deconnexion', { method: 'POST' });
     afficherConnexion();
 });
 
-document.getElementById('deleteAccountButton').addEventListener('click', async () => {
+deleteAccountButton?.addEventListener('click', async () => {
     if (!confirm('Supprimer définitivement votre compte ?')) return;
 
     try {
