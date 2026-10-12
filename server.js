@@ -223,6 +223,39 @@ app.get('/api/me', verifierConnexion, (req, res) => {
   });
 });
 
+// Supprimer le compte de l'utilisateur connecté
+app.delete('/api/me', verifierConnexion, (req, res) => {
+  const id = Number(req.user.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ message: 'Identifiant invalide.' });
+  }
+
+  connection.query(
+    'DELETE FROM `User` WHERE id = ?',
+    [id],
+    (erreur) => {
+      if (erreur) {
+        console.log(erreur);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+      }
+
+      const sessionId = getSessionId(req);
+
+      if (sessionId) {
+        sessions.delete(sessionId);
+      }
+
+      res.setHeader(
+        'Set-Cookie',
+        'sid=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'
+      );
+
+      res.json({ message: 'Votre compte a été supprimé.' });
+    }
+  );
+});
+
 // Déconnecter l'utilisateur
 app.post('/deconnexion', (req, res) => {
   const sessionId = getSessionId(req);

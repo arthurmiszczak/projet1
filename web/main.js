@@ -171,6 +171,18 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
     afficherConnexion();
 });
 
+document.getElementById('deleteAccountButton').addEventListener('click', async () => {
+    if (!confirm('Supprimer définitivement votre compte ?')) return;
+
+    try {
+        const data = await api('/api/me', { method: 'DELETE' });
+        alert(data.message);
+        afficherConnexion();
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
 api('/api/me').then(afficherTableauDeBord).catch(() => {
     afficherConnexion();
 });
