@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const path = require('path');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -83,8 +84,25 @@ function verifierAdmin(req, res, next) {
   });
 }
 
+async function hasherMotDePasse(password) {
+  const saltRounds = 10;
+  return bcrypt.hash(password, saltRounds);
+}
+
+async function verifierMotDePasse(password, motDePasseStocke) {
+  if (!motDePasseStocke) {
+    return false;
+  }
+
+  if (motDePasseStocke.startsWith('$2')) {
+    return bcrypt.compare(password, motDePasseStocke);
+  }
+
+  return password === motDePasseStocke;
+}
+
 // Créer un compte
-app.post('/inscription', (req, res) => {
+app.post('/inscription', async (req, res) => {
   const login = req.body.inputValue;
   const password = req.body.inputValue2;
 
@@ -93,32 +111,40 @@ app.post('/inscription', (req, res) => {
       message: 'Il faut saisir un identifiant et un mot de passe.'
     });
   }
-    if (password.length < 4 || password.length > 8) {
+
+  if (password.length < 4 || password.length > 8) {
     return res.status(400).json({
       message: 'Le mot de passe doit contenir entre 4 et 8 caractères.'
     });
   }
 
-  connection.query(
-    'INSERT INTO `User` (login, password, admin) VALUES (?, ?, 0)',
-    [login, password],
-    (erreur, resultat) => {
-      if (erreur) {
-        console.log(erreur);
+  try {
+    const motDePasseHache = await hasherMotDePasse(password);
 
-        if (erreur.code === 'ER_DUP_ENTRY') {
-          return res.status(409).json({ message: 'Cet identifiant existe déjà.' });
+    connection.query(
+      'INSERT INTO `User` (login, password, admin) VALUES (?, ?, 0)',
+      [login, motDePasseHache],
+      (erreur, resultat) => {
+        if (erreur) {
+          console.log(erreur);
+
+          if (erreur.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'Cet identifiant existe déjà.' });
+          }
+
+          return res.status(500).json({ message: 'Erreur serveur.' });
         }
 
-        return res.status(500).json({ message: 'Erreur serveur.' });
+        res.status(201).json({
+          message: 'Compte créé !',
+          userId: resultat.insertId
+        });
       }
-
-      res.status(201).json({
-        message: 'Compte créé !',
-        userId: resultat.insertId
-      });
-    }
-  );
+    );
+  } catch (erreur) {
+    console.log(erreur);
+    return res.status(500).json({ message: 'Erreur serveur.' });
+  }
 });
 
 // Connecter un utilisateur
@@ -126,10 +152,16 @@ app.post('/connexion', (req, res) => {
   const login = req.body.login;
   const password = req.body.password;
 
+  if (!login || !password) {
+    return res.status(400).json({
+      message: 'Il faut saisir un identifiant et un mot de passe.'
+    });
+  }
+
   connection.query(
-    'SELECT id FROM `User` WHERE login = ? AND password = ?',
-    [login, password],
-    (erreur, resultats) => {
+    'SELECT id, password FROM `User` WHERE login = ?',
+    [login],
+    async (erreur, resultats) => {
       if (erreur) {
         console.log(erreur);
         return res.status(500).json({ message: 'Erreur serveur.' });
@@ -139,18 +171,45 @@ app.post('/connexion', (req, res) => {
         return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect.' });
       }
 
-      const sessionId = crypto.randomBytes(32).toString('hex');
+      const utilisateur = resultats[0];
 
-      sessions.set(sessionId, {
-        userId: resultats[0].id
-      });
+      try {
+        const motDePasseValide = await verifierMotDePasse(password, utilisateur.password);
 
-      res.setHeader(
-        'Set-Cookie',
-        `sid=${sessionId}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800`
-      );
+        if (!motDePasseValide) {
+          return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect.' });
+        }
 
-      res.json({ message: 'Connexion réussie !' });
+        if (utilisateur.password && !utilisateur.password.startsWith('$2')) {
+          const motDePasseHache = await hasherMotDePasse(password);
+
+          connection.query(
+            'UPDATE `User` SET password = ? WHERE id = ?',
+            [motDePasseHache, utilisateur.id],
+            (erreurMiseAJour) => {
+              if (erreurMiseAJour) {
+                console.log(erreurMiseAJour);
+              }
+            }
+          );
+        }
+
+        const sessionId = crypto.randomBytes(32).toString('hex');
+
+        sessions.set(sessionId, {
+          userId: utilisateur.id
+        });
+
+        res.setHeader(
+          'Set-Cookie',
+          `sid=${sessionId}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800`
+        );
+
+        res.json({ message: 'Connexion réussie !' });
+      } catch (erreur) {
+        console.log(erreur);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+      }
     }
   );
 });
@@ -208,11 +267,18 @@ app.put('/api/users/:id', verifierAdmin, (req, res) => {
 
   // Si le champ mot de passe est vide, on ne le modifie pas
   if (password) {
-    connection.query(
-      'UPDATE `User` SET login = ?, password = ?, admin = ? WHERE id = ?',
-      [login.trim(), password, admin, id],
-      repondreModification
-    );
+    hasherMotDePasse(password)
+      .then((motDePasseHache) => {
+        connection.query(
+          'UPDATE `User` SET login = ?, password = ?, admin = ? WHERE id = ?',
+          [login.trim(), motDePasseHache, admin, id],
+          repondreModification
+        );
+      })
+      .catch((erreur) => {
+        console.log(erreur);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+      });
   } else {
     connection.query(
       'UPDATE `User` SET login = ?, admin = ? WHERE id = ?',
